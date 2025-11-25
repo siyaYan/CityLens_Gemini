@@ -1,0 +1,8 @@
+{
+  "name": "CityLens AR",
+  "description": "An AI-powered photo tourism guide that identifies landmarks, narrates their history, and generates fun cartoon postcards.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
