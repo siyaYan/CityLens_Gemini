@@ -16,6 +16,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1osRi0qT1_YagePQetxLVDl
 1. Install dependencies:
    `npm install`
 2. Set the `FREE_GEMINI_API_KEY` or `PAID_GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. free_api version need huggingface token, set `HF_API_TOKEN`, and `HF_IMAGE_MODEL_ID`=`black-forest-labs/FLUX.1-Krea-dev` , and replace all `geminiService` or `geminiService_paid` to `geminiService_free`
+3. Free_api version need huggingface token, set `HF_API_TOKEN`, and `HF_IMAGE_MODEL_ID`=`black-forest-labs/FLUX.1-Krea-dev` , 
+   and replace all `geminiService` or `geminiService_paid` string to `geminiService_free`
 4. Run the app:
    `npm run dev`
