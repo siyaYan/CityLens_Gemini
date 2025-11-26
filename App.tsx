@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import CameraView from './components/CameraView';
 import LandmarkHUD from './components/LandmarkHUD';
-import { identifyLandmark, getLandmarkDetails } from './services/geminiService';
+import { identifyLandmark, getLandmarkDetails } from './services/geminiService_free';
 import { LandmarkData, LandmarkDetails, AppState } from './types';
 
 const App: React.FC = () => {

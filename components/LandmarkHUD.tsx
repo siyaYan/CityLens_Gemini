@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RefreshCw, Image as ImageIcon, Sparkles, MapPin, Info, ExternalLink, Download, Loader2 } from 'lucide-react';
 import { LandmarkData, LandmarkDetails, AppState } from '../types';
 import { decodeAudioData, createWavBlob } from '../utils';
-import { generateNarration, generateCartoonPostcard } from '../services/geminiService';
+import { generateNarration, generateCartoonPostcard } from '../services/geminiService_free';
 
 interface LandmarkHUDProps {
   image: string;
