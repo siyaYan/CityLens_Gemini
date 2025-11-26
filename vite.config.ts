@@ -12,7 +12,10 @@ export default defineConfig(({ mode }) => {
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.FREE_GEMINI_API_KEY': JSON.stringify(env.FREE_GEMINI_API_KEY),
+        'process.env.PAID_GEMINI_API_KEY': JSON.stringify(env.PAID_GEMINI_API_KEY),
+        'process.env.HF_API_TOKEN': JSON.stringify(env.HF_API_TOKEN),
+        'process.env.HF_IMAGE_MODEL_ID': JSON.stringify(env.HF_IMAGE_MODEL_ID)
       },
       resolve: {
         alias: {
