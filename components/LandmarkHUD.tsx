@@ -100,6 +100,7 @@ const LandmarkHUD: React.FC<LandmarkHUDProps> = ({ image, landmarkData, details,
         const base64 = await generateCartoonPostcard(landmarkData.name);
         setCartoonImage(base64);
         setShowCartoon(true);
+        
     } catch (e) {
         console.error(e);
         alert("Failed to create cartoon.");

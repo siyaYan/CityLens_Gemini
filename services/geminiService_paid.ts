@@ -2,7 +2,7 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LandmarkData, LandmarkDetails, GroundingSource } from "../types";
 
 // Ensure API key is present
-const apiKey = process.env.API_KEY;
+const apiKey = process.env.PAID_GEMINI_API_KEY;
 if (!apiKey) {
   console.error("API_KEY is missing from environment variables");
 }
