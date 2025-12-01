@@ -20,16 +20,18 @@ View your app in AI Studio: https://ai.studio/apps/drive/1osRi0qT1_YagePQetxLVDl
    FREE_GEMINI_API_KEY=...
    HF_API_TOKEN=...
    HF_IMAGE_MODEL_ID=black-forest-labs/FLUX.1-Krea-dev
+   # Optional, only if you want to use the paid tier locally
+   PAID_GEMINI_API_KEY=...
+   # Optional override if your API lives on another domain
+   NEXT_PUBLIC_API_URL=https://your-custom-domain.com
    ```
-   > These values are now only read by the backend server, so they will not be exposed to the browser bundle.
-3. Start the backend API (runs on port 4000 by default):
-   `npm run server`
-4. In a second terminal start the Vite dev server:
+   > All keys are consumed by Next.js API routes, so nothing sensitive ships to the client bundle. On Vercel, add these under **Project Settings → Environment Variables**.
+3. Start the dev server (Next.js serves both the React UI and the API routes):
    `npm run dev`
-5. Visit http://localhost:3000. Requests to `/api/*` are automatically proxied to the backend, so no additional configuration is required. For deployments, serve the built frontend behind the same origin as the backend or set `VITE_API_URL` to the hosted API base.
+4. Visit http://localhost:3000. API requests hit `/api/*` (or `/api/paid/*`) automatically, matching the same routes you’ll have in production on Vercel.
 
 ## Free vs Paid Gemini modes
 
-- **Free (default)** – The frontend imports helpers from `services/geminiService_free.ts`, which talk to `/api/*` routes. These rely on the `FREE_GEMINI_API_KEY` plus Hugging Face for postcard generation.
-- **Paid** – Add `PAID_GEMINI_API_KEY=<your key>` to `.env.local`. The backend automatically exposes `/api/paid/*` routes that use `gemini-3-pro-preview` for identification and `gemini-2.5-flash-image` for postcard art. Swap your UI imports to `services/geminiService_paid.ts` whenever you want the higher-tier experience (e.g. in `App.tsx` or `LandmarkHUD.tsx`).
-- Both sets of routes run simultaneously, so developers can switch between them without restarting the server—just ensure the corresponding environment variables exist before launching `npm run server`.
+- **Free (default)** – Import helpers from `services/geminiService_free.ts`. They call `/api/*` routes implemented inside Next.js API handlers and rely on `FREE_GEMINI_API_KEY` + Hugging Face for postcard generation.
+- **Paid** – Populate `PAID_GEMINI_API_KEY` and swap your imports to `services/geminiService_paid.ts`. Those helpers use `/api/paid/*`, which tap `gemini-3-pro-preview` for recognition and `gemini-2.5-flash-image` for postcards.
+- Both route sets live side-by-side, so you can toggle between them simply by changing the import—no config tweaks or separate servers are required.

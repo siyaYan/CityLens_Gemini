@@ -1,9 +1,10 @@
 import { LandmarkData, LandmarkDetails } from "../types";
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
+const API_PREFIX = `${API_BASE}/api`;
 
 const post = async <T>(path: string, body: Record<string, unknown>): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${API_PREFIX}${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -40,4 +41,3 @@ export const generateNarration = (text: string): Promise<string> => {
 export const generateCartoonPostcard = (landmarkName: string): Promise<string> => {
   return post<{ image: string }>('/cartoon', { landmarkName }).then(res => res.image);
 };
-

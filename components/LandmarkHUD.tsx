@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RefreshCw, Image as ImageIcon, Sparkles, MapPin, Info, ExternalLink, Download, Loader2 } from 'lucide-react';
 import { LandmarkData, LandmarkDetails, AppState } from '../types';

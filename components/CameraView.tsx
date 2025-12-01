@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useRef, useState } from 'react';
 import { Camera, Upload, Image as ImageIcon } from 'lucide-react';
 import { blobToBase64 } from '../utils';
