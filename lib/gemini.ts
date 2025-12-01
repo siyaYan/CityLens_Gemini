@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { GoogleGenAI, Modality, Type } from '@google/genai';
 import { HfInference } from '@huggingface/inference';
 import { LandmarkData, LandmarkDetails, GroundingSource } from '@/types';
@@ -34,9 +35,25 @@ const mapSources = (response: Awaited<ReturnType<GoogleGenAI['models']['generate
     }));
 };
 
-const blobToBase64 = async (blob: Blob) => {
-  const buffer = Buffer.from(await blob.arrayBuffer());
-  return buffer.toString('base64');
+const payloadToBase64 = async (payload: Blob | ArrayBuffer | Uint8Array | string) => {
+  if (typeof payload === 'string') {
+    return payload;
+  }
+
+  if (payload instanceof Uint8Array) {
+    return Buffer.from(payload).toString('base64');
+  }
+
+  if (payload instanceof ArrayBuffer) {
+    return Buffer.from(payload).toString('base64');
+  }
+
+  if (typeof (payload as Blob)?.arrayBuffer === 'function') {
+    const buffer = await (payload as Blob).arrayBuffer();
+    return Buffer.from(buffer).toString('base64');
+  }
+
+  throw new Error('Unsupported image payload returned from Hugging Face.');
 };
 
 export const identifyLandmarkFree = async (base64Image: string, mimeType = 'image/jpeg') => {
@@ -125,7 +142,7 @@ export const generateCartoonFree = async (landmarkName: string): Promise<string>
     throw new Error('No image returned from Hugging Face.');
   }
 
-  return blobToBase64(imageBlob);
+  return payloadToBase64(imageBlob);
 };
 
 export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'image/jpeg') => {
