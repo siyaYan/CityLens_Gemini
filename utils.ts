@@ -1,19 +1,4 @@
-export const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
-        const base64 = reader.result.split(',')[1];
-        resolve(base64);
-      } else {
-        reject(new Error('Failed to convert blob to base64'));
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
+const MAX_UPLOAD_BYTES = 1024 * 1024; // 1MB limit
 
 export function base64ToBytes(base64: string): Uint8Array {
   const binaryString = atob(base64);
@@ -99,4 +84,78 @@ export function createWavBlob(base64Data: string): Blob {
   pcmBytes.set(pcmData);
 
   return new Blob([buffer], { type: 'audio/wav' });
+}
+
+const readFileAsDataURL = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const loadImageElement = (src: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+
+const estimateBase64Size = (dataUrl: string) => {
+  const [, base64] = dataUrl.split(',');
+  const payload = base64 ?? dataUrl;
+  return Math.ceil((payload.length * 3) / 4);
+};
+
+const dataUrlToBase64 = (dataUrl: string) => {
+  const [, base64] = dataUrl.split(',');
+  return base64 ?? dataUrl;
+};
+
+export async function prepareImageForUpload(file: File, maxBytes = MAX_UPLOAD_BYTES): Promise<string> {
+  const dataUrl = await readFileAsDataURL(file);
+  const image = await loadImageElement(dataUrl);
+
+  const canvas = document.createElement('canvas');
+  const MAX_DIMENSION = 1600;
+  const MIN_DIMENSION_SCALE = 0.5;
+  const MIN_QUALITY = 0.4;
+
+  const renderScaled = (scale: number) => {
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas 2D context is not available in this browser.');
+    }
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  };
+
+  let scale = Math.min(1, MAX_DIMENSION / Math.max(image.width, image.height));
+  scale = scale > 0 ? scale : 1;
+  let quality = 0.85;
+  let attempts = 0;
+
+  renderScaled(scale);
+  let data = canvas.toDataURL('image/jpeg', quality);
+
+  while (estimateBase64Size(data) > maxBytes && attempts < 12) {
+    if (quality > MIN_QUALITY) {
+      quality = Math.max(MIN_QUALITY, quality - 0.1);
+    } else if (scale > MIN_DIMENSION_SCALE) {
+      scale = Math.max(MIN_DIMENSION_SCALE, scale * 0.85);
+      renderScaled(scale);
+    } else {
+      break;
+    }
+    data = canvas.toDataURL('image/jpeg', quality);
+    attempts += 1;
+  }
+
+  if (estimateBase64Size(data) > maxBytes) {
+    throw new Error('Unable to compress image below 1MB. Please use a smaller image.');
+  }
+
+  return dataUrlToBase64(data);
 }

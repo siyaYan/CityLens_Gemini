@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { Camera, Upload, Image as ImageIcon } from 'lucide-react';
-import { blobToBase64 } from '../utils';
+import { prepareImageForUpload } from '../utils';
 
 interface CameraViewProps {
   onCapture: (base64Image: string) => void;
@@ -16,10 +16,11 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture }) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       try {
-        const base64 = await blobToBase64(file);
+        const base64 = await prepareImageForUpload(file);
         onCapture(base64);
       } catch (err) {
-        console.error("Error reading file", err);
+        console.error("Error processing file", err);
+        alert('Could not process image. Please try another photo under 1MB.');
       }
     }
   };
@@ -40,8 +41,13 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture }) => {
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      const base64 = await blobToBase64(file);
-      onCapture(base64);
+      try {
+        const base64 = await prepareImageForUpload(file);
+        onCapture(base64);
+      } catch (err) {
+        console.error("Error processing file", err);
+        alert('Could not process image. Please try another photo under 1MB.');
+      }
     }
   };
 
