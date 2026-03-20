@@ -88,9 +88,11 @@ export const identifyLandmarkFree = async (base64Image: string, mimeType = 'imag
 
   return parseLandmarkResponse(response);
 };
-
 export const getLandmarkDetailsFree = async (landmarkName: string): Promise<LandmarkDetails> => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
+
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
@@ -105,6 +107,24 @@ export const getLandmarkDetailsFree = async (landmarkName: string): Promise<Land
     sources: mapSources(response),
   };
 };
+// export const getLandmarkDetailsFree = async (landmarkName: string): Promise<LandmarkDetails> => {
+
+//   let delay = 3000;
+//   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
+//   const response = await ai.models.generateContent({
+//     model: 'gemini-3-flash-preview',
+//     contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
+//     config: {
+//       tools: [{ googleSearch: {} }],
+//     },
+//   });
+
+//   return {
+//     history: response.text || 'No details found.',
+//     visitorInfo: '',
+//     sources: mapSources(response),
+//   };
+// };
 
 export const generateNarrationFree = async (text: string): Promise<string> => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
@@ -130,6 +150,7 @@ export const generateNarrationFree = async (text: string): Promise<string> => {
   return base64Audio;
 };
 
+
 export const generateCartoonFree = async (landmarkName: string): Promise<string> => {
   const hf = ensureClient(hfClient, 'HF_API_TOKEN is not configured.');
   const prompt = `Create a vibrant, fun, high-quality cartoon-style illustration of ${landmarkName}. It should look like a travel postcard, with bold colors and a clear composition, suitable for a landmark tour app.`;
@@ -148,7 +169,7 @@ export const generateCartoonFree = async (landmarkName: string): Promise<string>
 export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'image/jpeg') => {
   const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-2.5-flash',
     contents: {
       parts: [
         {
