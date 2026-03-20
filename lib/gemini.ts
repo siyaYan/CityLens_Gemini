@@ -59,7 +59,7 @@ const payloadToBase64 = async (payload: Blob | ArrayBuffer | Uint8Array | string
 export const identifyLandmarkFree = async (base64Image: string, mimeType = 'image/jpeg') => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: 'gemini-3-flash-preview',
     contents: {
       parts: [
         {
@@ -92,7 +92,7 @@ export const identifyLandmarkFree = async (base64Image: string, mimeType = 'imag
 export const getLandmarkDetailsFree = async (landmarkName: string): Promise<LandmarkDetails> => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash-preview',
     contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
     config: {
       tools: [{ googleSearch: {} }],
@@ -181,7 +181,7 @@ export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'imag
 export const getLandmarkDetailsPaid = async (landmarkName: string): Promise<LandmarkDetails> => {
   const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash-preview',
     contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
     config: {
       tools: [{ googleSearch: {} }],
