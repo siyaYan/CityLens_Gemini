@@ -8,6 +8,12 @@ const paidGeminiKey = process.env.PAID_GEMINI_API_KEY || '';
 const hfToken = process.env.HF_API_TOKEN || '';
 const hfModelId = process.env.HF_IMAGE_MODEL_ID || 'black-forest-labs/FLUX.1-dev';
 
+const FREE_IDENTIFY_MODEL = 'gemini-3-flash-preview';
+const DETAILS_MODEL = 'gemini-2.5-flash';
+const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
+const PAID_IDENTIFY_MODEL = 'gemini-2.5-flash';
+const PAID_IMAGE_MODEL = 'gemini-2.5-flash-image';
+
 const freeGeminiClient = freeGeminiKey ? new GoogleGenAI({ apiKey: freeGeminiKey }) : null;
 const paidGeminiClient = paidGeminiKey ? new GoogleGenAI({ apiKey: paidGeminiKey }) : null;
 const hfClient = hfToken ? new HfInference(hfToken) : null;
@@ -59,7 +65,7 @@ const payloadToBase64 = async (payload: Blob | ArrayBuffer | Uint8Array | string
 export const identifyLandmarkFree = async (base64Image: string, mimeType = 'image/jpeg') => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: FREE_IDENTIFY_MODEL,
     contents: {
       parts: [
         {
@@ -90,11 +96,10 @@ export const identifyLandmarkFree = async (base64Image: string, mimeType = 'imag
 };
 export const getLandmarkDetailsFree = async (landmarkName: string): Promise<LandmarkDetails> => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
-
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    // Free-tier Gemini 3 Flash preview does not support Google Search grounding.
+    // Use 2.5 Flash here so the second request can succeed with grounded results.
+    model: DETAILS_MODEL,
     contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
     config: {
       tools: [{ googleSearch: {} }],
@@ -129,7 +134,7 @@ export const getLandmarkDetailsFree = async (landmarkName: string): Promise<Land
 export const generateNarrationFree = async (text: string): Promise<string> => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-preview-tts',
+    model: TTS_MODEL,
     contents: {
       parts: [{ text: `Welcome to this tour! ${text}` }],
     },
@@ -169,7 +174,7 @@ export const generateCartoonFree = async (landmarkName: string): Promise<string>
 export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'image/jpeg') => {
   const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: PAID_IDENTIFY_MODEL,
     contents: {
       parts: [
         {
@@ -202,7 +207,7 @@ export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'imag
 export const getLandmarkDetailsPaid = async (landmarkName: string): Promise<LandmarkDetails> => {
   const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: DETAILS_MODEL,
     contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
     config: {
       tools: [{ googleSearch: {} }],
@@ -219,7 +224,7 @@ export const getLandmarkDetailsPaid = async (landmarkName: string): Promise<Land
 export const generateNarrationPaid = async (text: string): Promise<string> => {
   const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-preview-tts',
+    model: TTS_MODEL,
     contents: {
       parts: [{ text: `Welcome to this tour! ${text}` }],
     },
@@ -243,7 +248,7 @@ export const generateNarrationPaid = async (text: string): Promise<string> => {
 export const generateCartoonPaid = async (landmarkName: string): Promise<string> => {
   const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
+    model: PAID_IMAGE_MODEL,
     contents: {
       parts: [
         {

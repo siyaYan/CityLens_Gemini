@@ -16,8 +16,11 @@ export default function HomePage() {
     setCapturedImage(base64Image);
     setAppState(AppState.ANALYZING);
 
+    let identifiedLandmark: LandmarkData | null = null;
+
     try {
       const data = await identifyLandmark(base64Image);
+      identifiedLandmark = data;
       setLandmarkData(data);
       setAppState(AppState.FETCHING_DETAILS);
 
@@ -27,7 +30,7 @@ export default function HomePage() {
     } catch (error) {
       console.error(error);
       setAppState(AppState.ERROR);
-      if (landmarkData) {
+      if (identifiedLandmark) {
         setAppState(AppState.READY);
       } else {
         alert('Could not identify the image. Please try again.');
