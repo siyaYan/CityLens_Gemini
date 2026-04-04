@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RefreshCw, Image as ImageIcon, Sparkles, MapPin, Info, ExternalLink, Download, Loader2 } from 'lucide-react';
+import { Play, Pause, RefreshCw, MapPin, ExternalLink, Download, Loader2 } from 'lucide-react';
 import { LandmarkData, LandmarkDetails, AppState } from '../types';
 import { decodeAudioData, createWavBlob } from '../utils';
-import { generateNarration, generateCartoonPostcard } from '../services/geminiService_free';
+import { generateNarration } from '../services/geminiService_free';
 
 interface LandmarkHUDProps {
   image: string;
@@ -21,10 +21,6 @@ const LandmarkHUD: React.FC<LandmarkHUDProps> = ({ image, landmarkData, details,
   const [audioDownloadUrl, setAudioDownloadUrl] = useState<string | null>(null);
   const [audioSource, setAudioSource] = useState<AudioBufferSourceNode | null>(null);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  
-  const [cartoonImage, setCartoonImage] = useState<string | null>(null);
-  const [isGeneratingCartoon, setIsGeneratingCartoon] = useState(false);
-  const [showCartoon, setShowCartoon] = useState(false);
 
   // Initialize Audio Context on mount
   useEffect(() => {
@@ -91,32 +87,12 @@ const LandmarkHUD: React.FC<LandmarkHUDProps> = ({ image, landmarkData, details,
     setIsPlaying(true);
   };
 
-  const handleCartoonAction = async () => {
-    if (cartoonImage) {
-        setShowCartoon(!showCartoon);
-        return;
-    }
-    
-    setIsGeneratingCartoon(true);
-    try {
-        const base64 = await generateCartoonPostcard(landmarkData.name);
-        setCartoonImage(base64);
-        setShowCartoon(true);
-        
-    } catch (e) {
-        console.error(e);
-        alert("Failed to create cartoon.");
-    } finally {
-        setIsGeneratingCartoon(false);
-    }
-  };
-
   return (
     <div className="relative h-full w-full bg-black overflow-hidden flex flex-col">
-      {/* Background Image (Original or Cartoon) */}
+      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img 
-          src={showCartoon && cartoonImage ? `data:image/png;base64,${cartoonImage}` : `data:image/jpeg;base64,${image}`} 
+          src={`data:image/jpeg;base64,${image}`} 
           className="w-full h-full object-cover opacity-60" 
           alt="Landmark" 
         />
@@ -128,25 +104,6 @@ const LandmarkHUD: React.FC<LandmarkHUDProps> = ({ image, landmarkData, details,
          <button onClick={onReset} className="bg-black/40 backdrop-blur border border-white/20 p-2 rounded-full text-white hover:bg-white/20 transition">
             <RefreshCw size={20} />
          </button>
-         <div className="flex space-x-2">
-            {showCartoon && cartoonImage && (
-                <a 
-                   href={`data:image/png;base64,${cartoonImage}`} 
-                   download={`${landmarkData.name.replace(/\s+/g, '_')}_postcard.png`}
-                   className="bg-black/40 backdrop-blur border border-white/20 p-2 rounded-full text-white hover:bg-green-500/50 hover:border-green-400 transition"
-                   title="Download Postcard"
-                >
-                   <Download size={20} />
-                </a>
-            )}
-            <button 
-                onClick={handleCartoonAction}
-                disabled={(!cartoonImage && !details) || isGeneratingCartoon}
-                className={`p-2 rounded-full backdrop-blur border transition flex items-center justify-center ${showCartoon ? 'bg-pink-500/80 border-pink-400 text-white' : 'bg-black/40 border-white/20 text-white'}`}
-            >
-                {isGeneratingCartoon ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
-            </button>
-         </div>
       </div>
 
       {/* Main Content Area */}

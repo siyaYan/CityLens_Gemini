@@ -37,7 +37,3 @@ export const getLandmarkDetails = (landmarkName: string): Promise<LandmarkDetail
 export const generateNarration = (text: string): Promise<string> => {
   return post<{ audio: string }>('/narration', { text }).then(res => res.audio);
 };
-
-export const generateCartoonPostcard = (landmarkName: string): Promise<string> => {
-  return post<{ image: string }>('/cartoon', { landmarkName }).then(res => res.image);
-};
