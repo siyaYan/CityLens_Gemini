@@ -1,22 +1,29 @@
-import { Buffer } from 'node:buffer';
-import { GoogleGenAI, Modality, Type } from '@google/genai';
-import { HfInference } from '@huggingface/inference';
-import { LandmarkData, LandmarkDetails, GroundingSource } from '@/types';
+import { GoogleGenAI, Type } from '@google/genai';
+import { LandmarkData, TourDetails } from '@/types';
+
+const readEnv = (value: string | undefined, fallback = '') => {
+  if (!value) {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  const normalized = trimmed.replace(/^['"]|['"]$/g, '');
+
+  return normalized || fallback;
+};
 
 const freeGeminiKey = process.env.FREE_GEMINI_API_KEY || '';
 const paidGeminiKey = process.env.PAID_GEMINI_API_KEY || '';
-const hfToken = process.env.HF_API_TOKEN || '';
-const hfModelId = process.env.HF_IMAGE_MODEL_ID || 'black-forest-labs/FLUX.1-dev';
 
-const FREE_IDENTIFY_MODEL = 'gemini-3-flash-preview';
-const DETAILS_MODEL = 'gemini-2.5-flash';
-const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
-const PAID_IDENTIFY_MODEL = 'gemini-2.5-flash';
-const PAID_IMAGE_MODEL = 'gemini-2.5-flash-image';
+const FREE_IDENTIFY_MODEL = readEnv(process.env.FREE_IDENTIFY_MODEL, 'gemini-3-flash-preview');
+const DETAILS_MODEL = readEnv(process.env.DETAILS_MODEL, 'gemini-2.5-flash');
+const PAID_IDENTIFY_MODEL = readEnv(process.env.PAID_IDENTIFY_MODEL, 'gemini-2.5-flash');
+const PAID_DETAILS_MODEL = readEnv(process.env.PAID_DETAILS_MODEL, DETAILS_MODEL);
+const FREE_IMAGE_MODEL = readEnv(process.env.FREE_IMAGE_MODEL, 'gemini-2.5-flash-image');
+const PAID_IMAGE_MODEL = readEnv(process.env.PAID_IMAGE_MODEL, 'gemini-2.5-flash-image');
 
 const freeGeminiClient = freeGeminiKey ? new GoogleGenAI({ apiKey: freeGeminiKey }) : null;
 const paidGeminiClient = paidGeminiKey ? new GoogleGenAI({ apiKey: paidGeminiKey }) : null;
-const hfClient = hfToken ? new HfInference(hfToken) : null;
 
 const ensureClient = <T>(client: T | null, message: string): T => {
   if (!client) {
@@ -25,41 +32,29 @@ const ensureClient = <T>(client: T | null, message: string): T => {
   return client;
 };
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const parseJson = <T>(text: string | undefined, fallbackMessage: string): T => {
+  if (!text) {
+    throw new Error(fallbackMessage);
+  }
+
+  return JSON.parse(text) as T;
+};
+
 const parseLandmarkResponse = (response: Awaited<ReturnType<GoogleGenAI['models']['generateContent']>>): LandmarkData => {
-  const jsonText = response.text || '{}';
-  return JSON.parse(jsonText) as LandmarkData;
-};
+  const parsed = parseJson<LandmarkData>(response.text, 'No landmark data returned.');
 
-const mapSources = (response: Awaited<ReturnType<GoogleGenAI['models']['generateContent']>>): GroundingSource[] => {
-  const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-  return chunks
-    .map(chunk => chunk.web)
-    .filter((web): web is NonNullable<typeof web> => Boolean(web))
-    .map(web => ({
-      uri: web.uri || '',
-      title: web.title || 'Source',
-    }));
-};
-
-const payloadToBase64 = async (payload: Blob | ArrayBuffer | Uint8Array | string) => {
-  if (typeof payload === 'string') {
-    return payload;
-  }
-
-  if (payload instanceof Uint8Array) {
-    return Buffer.from(payload).toString('base64');
-  }
-
-  if (payload instanceof ArrayBuffer) {
-    return Buffer.from(payload).toString('base64');
-  }
-
-  if (typeof (payload as Blob)?.arrayBuffer === 'function') {
-    const buffer = await (payload as Blob).arrayBuffer();
-    return Buffer.from(buffer).toString('base64');
-  }
-
-  throw new Error('Unsupported image payload returned from Hugging Face.');
+  return {
+    name: parsed.name,
+    briefIntro: parsed.briefIntro,
+    location: {
+      latitude: clamp(Number(parsed.location?.latitude ?? 0), -90, 90),
+      longitude: clamp(Number(parsed.location?.longitude ?? 0), -180, 180),
+      city: parsed.location?.city || 'Unknown city',
+      country: parsed.location?.country || 'Unknown country',
+    },
+  };
 };
 
 export const identifyLandmarkFree = async (base64Image: string, mimeType = 'image/jpeg') => {
@@ -75,7 +70,7 @@ export const identifyLandmarkFree = async (base64Image: string, mimeType = 'imag
           },
         },
         {
-          text: "Identify the landmark in this photo. If it's a famous building, statue, or place, provide its name. Also provide a very brief (1 sentence) visual description.",
+          text: "Identify the landmark in this photo. Return JSON with the landmark name, a short 1-2 sentence travel-style intro, and the best approximate city, country, latitude, and longitude for the landmark center. If the exact spot is unclear, return your best estimate for the recognized place.",
         },
       ],
     },
@@ -85,90 +80,99 @@ export const identifyLandmarkFree = async (base64Image: string, mimeType = 'imag
         type: Type.OBJECT,
         properties: {
           name: { type: Type.STRING },
-          visualDescription: { type: Type.STRING },
+          briefIntro: { type: Type.STRING },
+          location: {
+            type: Type.OBJECT,
+            properties: {
+              latitude: { type: Type.NUMBER },
+              longitude: { type: Type.NUMBER },
+              city: { type: Type.STRING },
+              country: { type: Type.STRING },
+            },
+            required: ['latitude', 'longitude', 'city', 'country'],
+          },
         },
-        required: ['name', 'visualDescription'],
+        required: ['name', 'briefIntro', 'location'],
       },
     },
   });
 
   return parseLandmarkResponse(response);
 };
-export const getLandmarkDetailsFree = async (landmarkName: string): Promise<LandmarkDetails> => {
-  const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
-  const response = await ai.models.generateContent({
-    // Free-tier Gemini 3 Flash preview does not support Google Search grounding.
-    // Use 2.5 Flash here so the second request can succeed with grounded results.
-    model: DETAILS_MODEL,
-    contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
-    config: {
-      tools: [{ googleSearch: {} }],
-    },
-  });
+
+const parseDetailsResponse = (
+  response: Awaited<ReturnType<GoogleGenAI['models']['generateContent']>>
+): TourDetails => {
+  const parsed = parseJson<TourDetails>(response.text, 'No tour details returned.');
 
   return {
-    history: response.text || 'No details found.',
-    visitorInfo: '',
-    sources: mapSources(response),
+    overview: parsed.overview,
+    highlights: Array.isArray(parsed.highlights) ? parsed.highlights.slice(0, 4) : [],
+    visitTips: Array.isArray(parsed.visitTips) ? parsed.visitTips.slice(0, 4) : [],
   };
 };
-// export const getLandmarkDetailsFree = async (landmarkName: string): Promise<LandmarkDetails> => {
 
-//   let delay = 3000;
-//   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
-//   const response = await ai.models.generateContent({
-//     model: 'gemini-3-flash-preview',
-//     contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
-//     config: {
-//       tools: [{ googleSearch: {} }],
-//     },
-//   });
-
-//   return {
-//     history: response.text || 'No details found.',
-//     visitorInfo: '',
-//     sources: mapSources(response),
-//   };
-// };
-
-export const generateNarrationFree = async (text: string): Promise<string> => {
+export const getLandmarkDetailsFree = async (landmarkName: string) => {
   const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: TTS_MODEL,
+    model: DETAILS_MODEL,
     contents: {
-      parts: [{ text: `Welcome to this tour! ${text}` }],
+      parts: [
+        {
+          text: `You are writing a concise tour brief for travelers about ${landmarkName}. Return JSON with:
+overview: 2 elegant sentences,
+highlights: array of 3 short highlight lines,
+visitTips: array of 3 short practical tips.`,
+        },
+      ],
     },
     config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Fenrir' },
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          overview: { type: Type.STRING },
+          highlights: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+          visitTips: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
         },
+        required: ['overview', 'highlights', 'visitTips'],
       },
     },
   });
 
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) {
-    throw new Error('No audio data generated.');
-  }
-  return base64Audio;
+  return parseDetailsResponse(response);
 };
-
-
 export const generateCartoonFree = async (landmarkName: string): Promise<string> => {
-  const hf = ensureClient(hfClient, 'HF_API_TOKEN is not configured.');
-  const prompt = `Create a vibrant, fun, high-quality cartoon-style illustration of ${landmarkName}. It should look like a travel postcard, with bold colors and a clear composition, suitable for a landmark tour app.`;
-  const imageBlob = await hf.textToImage({
-    model: hfModelId,
-    inputs: prompt,
+  const ai = ensureClient(freeGeminiClient, 'FREE_GEMINI_API_KEY is not configured.');
+  const prompt = `Create a vibrant, fun, high-quality cartoon-style illustration of ${landmarkName}. It should look like a travel postcard, with bold colors and a clear composition.`;
+  const response = await ai.models.generateContent({
+    model: FREE_IMAGE_MODEL,
+    contents: {
+      parts: [{ text: prompt }],
+    },
+    config: {
+      imageConfig: {
+        aspectRatio: '4:3',
+      },
+    },
   });
 
-  if (!imageBlob) {
-    throw new Error('No image returned from Hugging Face.');
+  const parts = response.candidates?.[0]?.content?.parts;
+  if (parts) {
+    for (const part of parts) {
+      if (part.inlineData?.data) {
+        return part.inlineData.data;
+      }
+    }
   }
 
-  return payloadToBase64(imageBlob);
+  throw new Error(`No image generated by Gemini model "${FREE_IMAGE_MODEL}".`);
 };
 
 export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'image/jpeg') => {
@@ -184,7 +188,7 @@ export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'imag
           },
         },
         {
-          text: "Identify the landmark in this photo. If it's a famous building, statue, or place, provide its name. Also provide a very brief (1 sentence) visual description.",
+          text: "Identify the landmark in this photo. Return JSON with the landmark name, a short 1-2 sentence travel-style intro, and the best approximate city, country, latitude, and longitude for the landmark center. If the exact spot is unclear, return your best estimate for the recognized place.",
         },
       ],
     },
@@ -194,9 +198,19 @@ export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'imag
         type: Type.OBJECT,
         properties: {
           name: { type: Type.STRING },
-          visualDescription: { type: Type.STRING },
+          briefIntro: { type: Type.STRING },
+          location: {
+            type: Type.OBJECT,
+            properties: {
+              latitude: { type: Type.NUMBER },
+              longitude: { type: Type.NUMBER },
+              city: { type: Type.STRING },
+              country: { type: Type.STRING },
+            },
+            required: ['latitude', 'longitude', 'city', 'country'],
+          },
         },
-        required: ['name', 'visualDescription'],
+        required: ['name', 'briefIntro', 'location'],
       },
     },
   });
@@ -204,45 +218,41 @@ export const identifyLandmarkPaid = async (base64Image: string, mimeType = 'imag
   return parseLandmarkResponse(response);
 };
 
-export const getLandmarkDetailsPaid = async (landmarkName: string): Promise<LandmarkDetails> => {
+export const getLandmarkDetailsPaid = async (landmarkName: string) => {
   const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
   const response = await ai.models.generateContent({
-    model: DETAILS_MODEL,
-    contents: `Tell me the history and 2 interesting facts about ${landmarkName}. Also include current visitor information (like opening hours or ticket status if available). Keep the tone engaging for a tourist.`,
-    config: {
-      tools: [{ googleSearch: {} }],
-    },
-  });
-
-  return {
-    history: response.text || 'No details found.',
-    visitorInfo: '',
-    sources: mapSources(response),
-  };
-};
-
-export const generateNarrationPaid = async (text: string): Promise<string> => {
-  const ai = ensureClient(paidGeminiClient, 'PAID_GEMINI_API_KEY is not configured.');
-  const response = await ai.models.generateContent({
-    model: TTS_MODEL,
+    model: PAID_DETAILS_MODEL,
     contents: {
-      parts: [{ text: `Welcome to this tour! ${text}` }],
+      parts: [
+        {
+          text: `You are writing a concise tour brief for travelers about ${landmarkName}. Return JSON with:
+overview: 2 elegant sentences,
+highlights: array of 3 short highlight lines,
+visitTips: array of 3 short practical tips.`,
+        },
+      ],
     },
     config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Fenrir' },
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          overview: { type: Type.STRING },
+          highlights: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+          visitTips: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
         },
+        required: ['overview', 'highlights', 'visitTips'],
       },
     },
   });
 
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) {
-    throw new Error('No audio data generated.');
-  }
-  return base64Audio;
+  return parseDetailsResponse(response);
 };
 
 export const generateCartoonPaid = async (landmarkName: string): Promise<string> => {

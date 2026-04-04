@@ -1,38 +1,136 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@300;400;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: dark;
+  --bg-0: #07131b;
+  --bg-1: #0d2430;
+  --bg-2: #11374a;
+  --line: rgba(138, 217, 255, 0.18);
+  --glow: rgba(77, 216, 255, 0.32);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background:
+    radial-gradient(circle at top, rgba(69, 179, 255, 0.14), transparent 32%),
+    radial-gradient(circle at 80% 20%, rgba(90, 255, 206, 0.09), transparent 28%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 45%, #02080d 100%);
 }
 
 body {
-  font-family: 'Rajdhani', sans-serif;
-  background-color: #0f172a;
+  font-family: var(--font-body), sans-serif;
+  background-color: transparent;
   color: #e2e8f0;
+  min-height: 100vh;
 }
 
 .font-display {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display), sans-serif;
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.app-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(38, 167, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(71, 255, 194, 0.14), transparent 20%),
+    radial-gradient(circle at 50% 100%, rgba(18, 111, 145, 0.22), transparent 30%);
+  pointer-events: none;
+  z-index: -2;
+}
+
+.app-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, transparent 0, transparent calc(100% - 1px), rgba(148, 163, 184, 0.08) calc(100% - 1px)),
+    linear-gradient(to bottom, transparent 0, transparent calc(100% - 1px), rgba(148, 163, 184, 0.08) calc(100% - 1px));
+  background-size: 72px 72px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent 92%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.glass-panel {
+  background: linear-gradient(180deg, rgba(8, 20, 28, 0.76), rgba(5, 14, 20, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+}
+
+.glow-outline {
+  box-shadow:
+    0 0 0 1px rgba(124, 224, 255, 0.18),
+    0 0 40px rgba(48, 205, 255, 0.16);
+}
+
+.marker-pulse {
+  animation: marker-pulse 2.6s ease-out infinite;
+  transform-origin: center;
+}
+
+.float-soft {
+  animation: float-soft 8s ease-in-out infinite;
+}
+
+.story-panel {
+  background:
+    linear-gradient(180deg, rgba(8, 20, 28, 0.72), rgba(5, 14, 20, 0.3)),
+    radial-gradient(circle at top left, rgba(98, 226, 255, 0.1), transparent 40%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 18px 64px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(22px);
 }
 
 .scan-line {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  inset-inline: 0;
   height: 4px;
-  background: rgba(56, 189, 248, 0.8);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
-  animation: scan 2s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(104, 227, 255, 0.9), transparent);
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.7);
+  animation: scan 2.4s linear infinite;
   z-index: 10;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(112, 216, 255, 0.8), rgba(91, 122, 255, 0.65));
+  border-radius: 999px;
+}
+
+::selection {
+  background: rgba(77, 216, 255, 0.32);
+  color: #f8fafc;
 }
 
 @keyframes scan {
   0% {
-    top: 0%;
+    top: 0;
     opacity: 0;
   }
   10% {
@@ -44,5 +142,30 @@ body {
   100% {
     top: 100%;
     opacity: 0;
+  }
+}
+
+@keyframes marker-pulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.65);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
   }
 }

@@ -1,0 +1,173 @@
+import { LandmarkLocation } from '@/types';
+
+export interface WorldLandmarkMarker {
+  id: string;
+  name: string;
+  region: string;
+  icon: string;
+  summary: string;
+  location: LandmarkLocation;
+}
+
+export const worldLandmarks: WorldLandmarkMarker[] = [
+  {
+    id: 'eiffel-tower',
+    name: 'Eiffel Tower',
+    region: 'Paris, France',
+    icon: '▲',
+    summary: 'An iron landmark built for the 1889 Exposition Universelle and now the defining silhouette of Paris.',
+    location: { latitude: 48.8584, longitude: 2.2945, city: 'Paris', country: 'France' },
+  },
+  {
+    id: 'statue-of-liberty',
+    name: 'Statue of Liberty',
+    region: 'New York, USA',
+    icon: '✦',
+    summary: 'A colossal neoclassical sculpture gifted by France that stands at the entrance to New York Harbor.',
+    location: { latitude: 40.6892, longitude: -74.0445, city: 'New York', country: 'United States' },
+  },
+  {
+    id: 'colosseum',
+    name: 'Colosseum',
+    region: 'Rome, Italy',
+    icon: '◼',
+    summary: 'The largest Roman amphitheatre ever built, associated with gladiatorial contests and imperial spectacle.',
+    location: { latitude: 41.8902, longitude: 12.4922, city: 'Rome', country: 'Italy' },
+  },
+  {
+    id: 'big-ben',
+    name: 'Big Ben',
+    region: 'London, UK',
+    icon: '▮',
+    summary: 'The iconic Great Bell and clock tower beside the Palace of Westminster, synonymous with London.',
+    location: { latitude: 51.5007, longitude: -0.1246, city: 'London', country: 'United Kingdom' },
+  },
+  {
+    id: 'sagrada-familia',
+    name: 'Sagrada Familia',
+    region: 'Barcelona, Spain',
+    icon: '✧',
+    summary: 'Gaudi’s extraordinary basilica, still under construction, blending sacred symbolism with organic geometry.',
+    location: { latitude: 41.4036, longitude: 2.1744, city: 'Barcelona', country: 'Spain' },
+  },
+  {
+    id: 'acropolis',
+    name: 'Acropolis',
+    region: 'Athens, Greece',
+    icon: '△',
+    summary: 'A hilltop citadel crowned by the Parthenon and among the most important monuments of classical Greece.',
+    location: { latitude: 37.9715, longitude: 23.7257, city: 'Athens', country: 'Greece' },
+  },
+  {
+    id: 'great-pyramid',
+    name: 'Great Pyramid of Giza',
+    region: 'Giza, Egypt',
+    icon: '▲',
+    summary: 'The last surviving wonder of the ancient world and a monumental tomb from Egypt’s Old Kingdom.',
+    location: { latitude: 29.9792, longitude: 31.1342, city: 'Giza', country: 'Egypt' },
+  },
+  {
+    id: 'petra',
+    name: 'Petra',
+    region: 'Wadi Musa, Jordan',
+    icon: '◇',
+    summary: 'A rose-colored archaeological city carved into sandstone cliffs by the Nabataeans.',
+    location: { latitude: 30.3285, longitude: 35.4444, city: 'Wadi Musa', country: 'Jordan' },
+  },
+  {
+    id: 'taj-mahal',
+    name: 'Taj Mahal',
+    region: 'Agra, India',
+    icon: '✦',
+    summary: 'A white marble mausoleum commissioned by Shah Jahan and regarded as a masterpiece of Mughal architecture.',
+    location: { latitude: 27.1751, longitude: 78.0421, city: 'Agra', country: 'India' },
+  },
+  {
+    id: 'burj-khalifa',
+    name: 'Burj Khalifa',
+    region: 'Dubai, UAE',
+    icon: '▮',
+    summary: 'The tallest building on Earth, rising above Dubai as a symbol of contemporary engineering ambition.',
+    location: { latitude: 25.1972, longitude: 55.2744, city: 'Dubai', country: 'United Arab Emirates' },
+  },
+  {
+    id: 'angkor-wat',
+    name: 'Angkor Wat',
+    region: 'Siem Reap, Cambodia',
+    icon: '✧',
+    summary: 'A vast Khmer temple complex first built as a Hindu sanctuary and later transformed into a Buddhist site.',
+    location: { latitude: 13.4125, longitude: 103.867, city: 'Siem Reap', country: 'Cambodia' },
+  },
+  {
+    id: 'tokyo-tower',
+    name: 'Tokyo Tower',
+    region: 'Tokyo, Japan',
+    icon: '▴',
+    summary: 'A red-and-white communications tower inspired by the Eiffel Tower and a classic Tokyo skyline marker.',
+    location: { latitude: 35.6586, longitude: 139.7454, city: 'Tokyo', country: 'Japan' },
+  },
+  {
+    id: 'great-wall',
+    name: 'Great Wall',
+    region: 'Beijing, China',
+    icon: '≈',
+    summary: 'A vast network of defensive walls and fortifications stretching across northern China.',
+    location: { latitude: 40.4319, longitude: 116.5704, city: 'Beijing', country: 'China' },
+  },
+  {
+    id: 'sydney-opera-house',
+    name: 'Sydney Opera House',
+    region: 'Sydney, Australia',
+    icon: '◠',
+    summary: 'A modern performance venue with shell-like roofs that has become the visual symbol of Sydney Harbour.',
+    location: { latitude: -33.8568, longitude: 151.2153, city: 'Sydney', country: 'Australia' },
+  },
+  {
+    id: 'christ-the-redeemer',
+    name: 'Christ the Redeemer',
+    region: 'Rio de Janeiro, Brazil',
+    icon: '✝',
+    summary: 'A towering Art Deco statue overlooking Rio from Corcovado Mountain.',
+    location: { latitude: -22.9519, longitude: -43.2105, city: 'Rio de Janeiro', country: 'Brazil' },
+  },
+  {
+    id: 'machu-picchu',
+    name: 'Machu Picchu',
+    region: 'Cusco Region, Peru',
+    icon: '△',
+    summary: 'A dramatic Inca citadel set high in the Andes and one of the world’s best-known archaeological sites.',
+    location: { latitude: -13.1631, longitude: -72.545, city: 'Cusco Region', country: 'Peru' },
+  },
+  {
+    id: 'moai',
+    name: 'Moai of Easter Island',
+    region: 'Rapa Nui, Chile',
+    icon: '●',
+    summary: 'Monolithic stone figures created by the Rapa Nui people on one of the world’s most remote islands.',
+    location: { latitude: -27.1212, longitude: -109.3664, city: 'Rapa Nui', country: 'Chile' },
+  },
+  {
+    id: 'golden-gate',
+    name: 'Golden Gate Bridge',
+    region: 'San Francisco, USA',
+    icon: '≈',
+    summary: 'An orange-red suspension bridge spanning the Golden Gate strait and emblematic of San Francisco.',
+    location: { latitude: 37.8199, longitude: -122.4783, city: 'San Francisco', country: 'United States' },
+  },
+  {
+    id: 'empire-state',
+    name: 'Empire State Building',
+    region: 'New York, USA',
+    icon: '▮',
+    summary: 'A defining Art Deco skyscraper that once held the title of world’s tallest building.',
+    location: { latitude: 40.7484, longitude: -73.9857, city: 'New York', country: 'United States' },
+  },
+  {
+    id: 'chichen-itza',
+    name: 'Chichen Itza',
+    region: 'Yucatan, Mexico',
+    icon: '▲',
+    summary: 'A major Maya archaeological city known for El Castillo and its astronomical alignments.',
+    location: { latitude: 20.6843, longitude: -88.5678, city: 'Yucatan', country: 'Mexico' },
+  },
+];

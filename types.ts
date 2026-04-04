@@ -1,23 +1,25 @@
+export interface LandmarkLocation {
+  latitude: number;
+  longitude: number;
+  city: string;
+  country: string;
+}
+
 export interface LandmarkData {
   name: string;
-  visualDescription: string;
+  briefIntro: string;
+  location: LandmarkLocation;
 }
 
-export interface GroundingSource {
-  uri: string;
-  title: string;
-}
-
-export interface LandmarkDetails {
-  history: string;
-  visitorInfo: string;
-  sources: GroundingSource[];
+export interface TourDetails {
+  overview: string;
+  highlights: string[];
+  visitTips: string[];
 }
 
 export enum AppState {
   IDLE = 'IDLE',
   ANALYZING = 'ANALYZING',
-  FETCHING_DETAILS = 'FETCHING_DETAILS',
-  READY = 'READY',
+  IDENTIFIED = 'IDENTIFIED',
   ERROR = 'ERROR'
 }

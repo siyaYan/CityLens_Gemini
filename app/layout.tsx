@@ -1,9 +1,20 @@
 import type { Metadata } from 'next';
+import { Manrope, Space_Grotesk } from 'next/font/google';
 import './globals.css';
+
+const bodyFont = Manrope({
+  subsets: ['latin'],
+  variable: '--font-body',
+});
+
+const displayFont = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-display',
+});
 
 export const metadata: Metadata = {
   title: 'CityLens AR',
-  description: 'Identify landmarks, fetch details, and generate immersive tours.',
+  description: 'Identify landmarks from photos and explore them on an interactive world globe.',
 };
 
 export default function RootLayout({
@@ -13,7 +24,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-slate-900 text-white">{children}</body>
+      <body className={`${bodyFont.variable} ${displayFont.variable} min-h-screen bg-slate-950 text-white antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }

@@ -18,10 +18,13 @@ View your app in AI Studio: https://ai.studio/apps/drive/1osRi0qT1_YagePQetxLVDl
 2. Add your secrets to [.env.local](.env.local):
    ```
    FREE_GEMINI_API_KEY=...
-   HF_API_TOKEN=...
-   HF_IMAGE_MODEL_ID=black-forest-labs/FLUX.1-Krea-dev
+   # Optional AI model overrides. If omitted, the app falls back to built-in defaults.
+   FREE_IDENTIFY_MODEL=gemini-3-flash-preview
+   FREE_IMAGE_MODEL=gemini-2.5-flash-image
    # Optional, only if you want to use the paid tier locally
    PAID_GEMINI_API_KEY=...
+   PAID_IDENTIFY_MODEL=gemini-2.5-flash
+   PAID_IMAGE_MODEL=gemini-2.5-flash-image
    # Optional override if your API lives on another domain
    NEXT_PUBLIC_API_URL=https://your-custom-domain.com
    ```
@@ -32,6 +35,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1osRi0qT1_YagePQetxLVDl
 
 ## Free vs Paid Gemini modes
 
-- **Free (default)** – Import helpers from `services/geminiService_free.ts`. They call `/api/*` routes implemented inside Next.js API handlers and rely on `FREE_GEMINI_API_KEY` + Hugging Face for postcard generation.
-- **Paid** – Populate `PAID_GEMINI_API_KEY` and swap your imports to `services/geminiService_paid.ts`. Those helpers use `/api/paid/*`, which tap `gemini-3-pro-preview` for recognition and `gemini-2.5-flash-image` for postcards.
+- **Free (default)** – Import helpers from `services/geminiService_free.ts`. They call `/api/*` routes implemented inside Next.js API handlers and use `FREE_GEMINI_API_KEY` for both landmark recognition and postcard generation.
+- **Paid** – Populate `PAID_GEMINI_API_KEY` and swap your imports to `services/geminiService_paid.ts`. Those helpers use `/api/paid/*`, which tap `gemini-2.5-flash` for recognition and `gemini-2.5-flash-image` for postcards.
 - Both route sets live side-by-side, so you can toggle between them simply by changing the import—no config tweaks or separate servers are required.

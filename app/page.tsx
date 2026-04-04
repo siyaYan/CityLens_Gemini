@@ -3,82 +3,78 @@
 import { useState } from 'react';
 import CameraView from '@/components/CameraView';
 import LandmarkHUD from '@/components/LandmarkHUD';
-import { identifyLandmark, getLandmarkDetails } from '@/services/geminiService_free';
-import { AppState, LandmarkData, LandmarkDetails } from '@/types';
+import { identifyLandmark } from '@/services/geminiService_free';
+import { AppState, LandmarkData } from '@/types';
 
 export default function HomePage() {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [landmarkData, setLandmarkData] = useState<LandmarkData | null>(null);
-  const [details, setDetails] = useState<LandmarkDetails | null>(null);
 
   const handleCapture = async (base64Image: string) => {
     setCapturedImage(base64Image);
+    setLandmarkData(null);
     setAppState(AppState.ANALYZING);
-
-    let identifiedLandmark: LandmarkData | null = null;
 
     try {
       const data = await identifyLandmark(base64Image);
-      identifiedLandmark = data;
       setLandmarkData(data);
-      setAppState(AppState.FETCHING_DETAILS);
-
-      const detailsData = await getLandmarkDetails(data.name);
-      setDetails(detailsData);
-      setAppState(AppState.READY);
+      setAppState(AppState.IDENTIFIED);
     } catch (error) {
       console.error(error);
       setAppState(AppState.ERROR);
-      if (identifiedLandmark) {
-        setAppState(AppState.READY);
-      } else {
-        alert('Could not identify the image. Please try again.');
-        handleReset();
-      }
+      alert('Could not identify the image. Please try again.');
+      handleReset();
     }
   };
 
   const handleReset = () => {
     setCapturedImage(null);
     setLandmarkData(null);
-    setDetails(null);
     setAppState(AppState.IDLE);
   };
 
   return (
-    <div className="w-full h-screen bg-slate-900 text-white overflow-hidden flex flex-col">
+    <main className="app-shell w-full text-white">
       {appState === AppState.IDLE && <CameraView onCapture={handleCapture} />}
 
-      {(appState === AppState.ANALYZING || appState === AppState.ERROR) && capturedImage && (
-        <div className="relative h-full w-full flex items-center justify-center bg-black">
-          <img
-            src={`data:image/jpeg;base64,${capturedImage}`}
-            className="absolute inset-0 w-full h-full object-cover opacity-30"
-            alt="Analyzing"
-          />
-          <div className="scan-line" />
-          <div className="z-10 text-center space-y-4">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500" />
-            <h2 className="text-2xl font-display font-bold text-sky-400 tracking-widest animate-pulse">
-              ANALYZING SCENE
-            </h2>
-            <p className="text-sky-200/70 font-mono text-sm">Identifying landmarks via satellite uplink...</p>
+      {appState === AppState.ANALYZING && capturedImage && (
+        <section className="relative flex min-h-screen items-center justify-center px-6 py-10">
+          <div className="absolute inset-0 overflow-hidden">
+            <img
+              src={`data:image/jpeg;base64,${capturedImage}`}
+              className="h-full w-full scale-105 object-cover opacity-55 blur-[1px]"
+              alt="Analyzing uploaded landmark"
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(70,187,255,0.12),transparent_30%),linear-gradient(180deg,rgba(3,8,13,0.1),rgba(2,6,10,0.62))]" />
           </div>
-        </div>
+          <div className="scan-line" />
+          <div className="glass-panel glow-outline relative z-10 w-full max-w-xl rounded-[32px] px-8 py-10 text-center">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10">
+              <div className="h-12 w-12 animate-spin rounded-full border-2 border-cyan-300/30 border-t-cyan-200" />
+            </div>
+            <p className="mb-3 text-sm uppercase tracking-[0.45em] text-cyan-200/60">Computer Vision Pass</p>
+            <h2 className="font-display text-4xl font-semibold text-white sm:text-5xl">
+              Reading your landmark
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-base leading-7 text-slate-300">
+              AI is identifying the place in your photo, estimating its world position, and preparing the location
+              highlight for the globe.
+            </p>
+            <div className="mt-8 grid gap-3 text-left text-sm text-slate-300 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">Scene recognition</div>
+              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-4 py-3 text-cyan-100">
+                Geo highlight
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">World map ready</div>
+            </div>
+          </div>
+        </section>
       )}
 
-      {(appState === AppState.FETCHING_DETAILS || appState === AppState.READY) &&
-        capturedImage &&
-        landmarkData && (
-          <LandmarkHUD
-            image={capturedImage}
-            landmarkData={landmarkData}
-            details={details}
-            onReset={handleReset}
-            appState={appState}
-          />
-        )}
-    </div>
+      {appState === AppState.IDENTIFIED && capturedImage && landmarkData && (
+        <LandmarkHUD image={capturedImage} landmarkData={landmarkData} onReset={handleReset} />
+      )}
+    </main>
   );
 }
